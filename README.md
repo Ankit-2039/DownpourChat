@@ -2,7 +2,9 @@
 
 A full-stack real-time chat application with **AES-256 end-to-end encryption**, anonymous authentication, and transient encrypted messaging.
 
-🔗 **Live Demo:** https://downpourchat.netlify.app
+🔗 **Live Demo:** https://downpourchat.netlify.app  
+🖥️ **Server:** https://downpourchat-server.onrender.com  
+📦 **Repo:** https://github.com/Ankit-2039/DownpourChat
 
 ---
 
@@ -119,7 +121,25 @@ npm run dev     # starts both server + client
 | Service  | Platform       | URL                                          |
 |----------|----------------|----------------------------------------------|
 | Client   | Netlify        | https://downpourchat.netlify.app             |
+| Server   | Render         | https://downpourchat-server.onrender.com     |
 | Database | MongoDB Atlas  | Managed cloud                                |
+
+### Production env variables
+
+**Render (server):**
+```env
+MONGO_URI=<your Atlas URI>
+SESSION_SECRET=<strong random string>
+CLIENT_ORIGIN=https://downpourchat.netlify.app
+NODE_ENV=production
+```
+
+**Netlify (client):**
+```env
+VITE_SERVER_URL=https://downpourchat-server.onrender.com
+```
+
+> Note: Render free tier spins down after 15 min inactivity. First request may take ~30s to cold start.
 
 ---
 
