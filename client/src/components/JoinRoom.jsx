@@ -65,8 +65,8 @@ export default function JoinRoom() {
   return (
     <div className="join-room">
       <div className="join-room__card">
-        <h1>🔒 Encrypted Chat</h1>
-        <p className="join-room__subtitle">End-to-end encrypted. Anonymous. Ephemeral.</p>
+        <h1>Downpour Chat</h1>
+        <p className="join-room__subtitle">End-to-end encrypted. Anonymous. Impermanent.</p>
 
         <div className="tab-switcher">
           <button className={mode === 'join' ? 'active' : ''} onClick={() => setMode('join')}>Join Room</button>
