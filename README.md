@@ -1,6 +1,8 @@
 # 🔒 DownpourChat — MERN Real-Time Encrypted Chat
 
-A full-stack real-time chat application with **AES-256 end-to-end encryption**, anonymous authentication, and persistent encrypted transcripts.
+A full-stack real-time chat application with **AES-256 end-to-end encryption**, anonymous authentication, and transient encrypted messaging.
+
+🔗 **Live Demo:** https://downpourchat.netlify.app
 
 ---
 
@@ -10,10 +12,23 @@ A full-stack real-time chat application with **AES-256 end-to-end encryption**, 
 |------------|-------------------------------------|
 | Frontend   | React 18, Vite, React Router v6     |
 | Backend    | Node.js, Express.js                 |
-| Database   | MongoDB, Mongoose                   |
+| Database   | MongoDB Atlas, Mongoose             |
 | Real-time  | Socket.IO v4                        |
 | Encryption | Web Crypto API (AES-256-CBC, PBKDF2)|
 | Sessions   | express-session + connect-mongo     |
+| Hosting    | Netlify (client), Render (server)   |
+
+---
+
+## Features
+
+- 🔒 **AES-256 E2E Encryption** — server never sees plaintext
+- 👤 **Anonymous authentication** — no login, no registration
+- ⚡ **Real-time messaging** via Socket.IO WebSockets
+- ✍️ **Typing indicators** with multi-user support
+- 📜 **Chat transcripts** — persistent encrypted history
+- 💾 **Export chat** — download decrypted transcript as JSON on leave
+- ⏳ **Transient rooms** — auto-expire after 24 hours
 
 ---
 
@@ -22,6 +37,7 @@ A full-stack real-time chat application with **AES-256 end-to-end encryption**, 
 ```
 root/
 ├── start.bat              # Windows: double-click to launch everything
+├── netlify.toml           # Netlify SPA routing config
 ├── package.json           # Root: concurrently runs server + client
 ├── server/
 │   ├── config/db.js
@@ -56,7 +72,7 @@ root/
 
 ---
 
-## Setup & Installation
+## Local Setup
 
 ### 1. Clone the repo
 
@@ -67,11 +83,7 @@ cd DownpourChat
 
 ### 2. Configure environment variables
 
-**Server:**
-```bash
-cp server/.env.example server/.env
-```
-Edit `server/.env`:
+**Server** — `server/.env`:
 ```env
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/encrypted-chat
@@ -80,11 +92,7 @@ CLIENT_ORIGIN=http://localhost:5173
 NODE_ENV=development
 ```
 
-**Client:**
-```bash
-cp client/.env.example client/.env
-```
-Edit `client/.env`:
+**Client** — `client/.env`:
 ```env
 VITE_SERVER_URL=http://localhost:5000
 ```
@@ -99,19 +107,19 @@ npm install     # installs concurrently at root
 npm run dev     # starts both server + client
 ```
 
-Dependencies are installed automatically on first run via `start.bat`.
-
 | Service | URL                   |
 |---------|-----------------------|
 | Client  | http://localhost:5173 |
 | Server  | http://localhost:5000 |
 
-### 4. Production build
+---
 
-```bash
-npm run build   # builds client to client/dist
-npm start       # runs server in production mode
-```
+## Deployment
+
+| Service  | Platform       | URL                                          |
+|----------|----------------|----------------------------------------------|
+| Client   | Netlify        | https://downpourchat.netlify.app             |
+| Database | MongoDB Atlas  | Managed cloud                                |
 
 ---
 
@@ -126,34 +134,34 @@ User A                         Server                        User B
   |──► PBKDF2 ──► AES-256 Key     |         passphrase + roomId  |
   |   (in memory only)            |    AES-256 Key ◄── PBKDF2 ◄──|
   |                               |         (in memory only)     |
-  |  encrypt(plaintext) ──────────► store ciphertext ────────────►|
+  | encrypt(plaintext) ──────────► store ciphertext ────────────►|
   |                               |   (server sees NO plaintext) |
   |                               |                   decrypt()  |
   |                               |               plaintext ✓    |
 ```
 
-1. **Key Derivation** — On room join, the client derives an AES-256 key using `PBKDF2(passphrase, roomId, 100000 iterations, SHA-256)`. The key never leaves the browser.
-2. **Encrypt before send** — `MessageInput` calls `encryptMessage()` before emitting via Socket.IO. The payload sent is `{ ciphertext, iv }` — never plaintext.
-3. **Server is blind** — `socketHandler` persists and relays only ciphertext. `Message` schema has no plaintext field.
-4. **Decrypt on receive** — `useSocket` decrypts each incoming message immediately using the in-memory key. If decryption fails (wrong passphrase), the message renders as `[decryption failed]`.
-5. **Transcript decryption** — `ChatWindow` loads message history from the REST API and decrypts all historical ciphertexts client-side on mount.
+1. **Key Derivation** — Client derives AES-256 key via `PBKDF2(passphrase, roomId, 100000 iterations, SHA-256)`. Key never leaves the browser.
+2. **Encrypt before send** — Messages are encrypted client-side before emitting via Socket.IO. Server only receives `{ ciphertext, iv }`.
+3. **Server is blind** — Server stores and relays only ciphertext. No plaintext field exists in the database.
+4. **Decrypt on receive** — Incoming ciphertext is decrypted immediately using the in-memory key. Wrong passphrase renders `[decryption failed]`.
+5. **Transcript** — Chat history is fetched from the REST API and decrypted client-side on mount.
 
 ### Anonymous Authentication
 
-- On first request, `attachAnonId` middleware assigns a `uuid v4` as `req.session.anonId`.
-- This ID is stored in MongoDB via `connect-mongo` and shared with Socket.IO via `io.engine.use(sessionMiddleware)`.
-- No login, no registration, no PII stored.
+- On first request, `attachAnonId` middleware assigns a `uuid v4` as `req.session.anonId`
+- Stored in MongoDB via `connect-mongo`, shared with Socket.IO
+- No login, no registration, no PII stored
 
 ### Room Lifecycle
 
-- Rooms are created with a UUID and stored in MongoDB with a **24-hour TTL index** — they auto-expire.
-- Joining validates the room exists before proceeding to key derivation.
+- Rooms use UUID v4 identifiers with a **24-hour TTL** — auto-expire in MongoDB
+- Joining validates room existence before key derivation proceeds
 
 ### Transcript Export
 
-- On leaving a room, users are prompted to download the chat transcript.
-- The downloaded file is unencrypted JSON — decrypted client-side before export.
-- System messages (join/leave events) are excluded from the export.
+- On leave, users are prompted to download chat as JSON
+- File is decrypted client-side before export — server never involved
+- System messages excluded from export
 
 ---
 
@@ -191,11 +199,11 @@ User A                         Server                        User B
 
 ## Security Notes
 
-- **Passphrase strength** directly determines encryption strength. Weak passphrases are weak keys.
-- **Page refresh** clears the in-memory `CryptoKey` — users must re-enter their passphrase. This is intentional.
-- **Usernames** are stored in plaintext in `Message` documents as metadata (not sensitive content).
-- **Sessions** use `httpOnly` cookies. Set `NODE_ENV=production` and serve over HTTPS to enable `secure` cookies.
-- **Room IDs** are UUID v4 — not guessable, but should still be shared only via trusted channels.
+- **Passphrase strength** directly determines encryption strength
+- **Page refresh** clears the in-memory `CryptoKey` — users must re-enter passphrase (intentional)
+- **Usernames** stored as plaintext metadata only — not message content
+- **Sessions** use `httpOnly` cookies with `secure` flag in production
+- **Room IDs** are UUID v4 — share only via trusted channels
 
 ---
 
@@ -222,13 +230,11 @@ User A                         Server                        User B
 ## Dependencies
 
 ### Root
-
 | Package      | Purpose                      |
 |--------------|------------------------------|
 | concurrently | Run server + client together |
 
 ### Server
-
 | Package         | Purpose                      |
 |-----------------|------------------------------|
 | express         | HTTP server & routing        |
@@ -241,7 +247,6 @@ User A                         Server                        User B
 | dotenv          | Environment variable loading |
 
 ### Client
-
 | Package          | Purpose                       |
 |------------------|-------------------------------|
 | react            | UI framework                  |
