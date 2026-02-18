@@ -1,4 +1,4 @@
-# 🔒 DownpourChat — MERN Real-Time Encrypted Chat
+# DownpourChat — MERN Real-Time Encrypted Chat
 
 A full-stack real-time chat application with **AES-256 end-to-end encryption**, anonymous authentication, and transient encrypted messaging.
 
