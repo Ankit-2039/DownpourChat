@@ -105,7 +105,7 @@ export default function JoinRoom() {
               type="password"
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
-              placeholder="Shared secret for this room"
+              placeholder="Shared code for this room"
               autoComplete="new-password"
             />
           </label>
