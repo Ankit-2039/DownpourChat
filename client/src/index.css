@@ -19,7 +19,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -277,3 +277,70 @@ input:focus, textarea:focus { border-color: var(--accent); }
 }
 .message-input button:hover:not(:disabled) { background: var(--accent-h); }
 .message-input button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── Mobile ─────────────────────────────────── */
+@media (max-width: 480px) {
+
+  /* Fix vh on mobile browsers (keyboard/chrome pushes content) */
+  body {
+    height: 100dvh;
+  }
+
+  /* Join Room */
+  .join-room {
+    height: 100dvh;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+
+  .join-room__card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .join-room__card h1 {
+    font-size: 1.3rem;
+  }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  input, textarea {
+    font-size: 16px;
+  }
+
+  /* Chat Window */
+  .chat-window {
+    height: 100dvh;
+  }
+
+  .chat-header {
+    padding: .7rem 1rem;
+  }
+
+  .chat-header code {
+    /* Long room IDs will overflow on small screens */
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+
+  .chat-body {
+    padding: .75rem 1rem;
+  }
+
+  .chat-footer {
+    padding: .6rem 1rem;
+  }
+
+  /* Wider message bubbles on small screens */
+  .message {
+    max-width: 88%;
+  }
+
+  /* Dialog */
+  .dialog {
+    margin: 1rem;
+    padding: 1.5rem 1.25rem;
+  }
+}
